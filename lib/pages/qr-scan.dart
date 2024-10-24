@@ -1,15 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:GSCWD_PassSlip/main.dart';
-import 'package:GSCWD_PassSlip/pages/pass-slip.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:intl/intl.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:GSCWD_PassSlip/pages/menu.dart';
-import 'package:GSCWD_PassSlip/pages/receipt.dart';
 import 'package:GSCWD_PassSlip/types/employeeDetails.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
@@ -210,7 +205,7 @@ class _QrScanState extends State<QrScan> {
   }
 
   Widget buildControlButtons() => Container(
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: Colors.white24,
@@ -267,11 +262,11 @@ class _QrScanState extends State<QrScan> {
     if (mounted) {
       setState(() => this.controller = controller);
       controller.scannedDataStream.listen((barcode) => getData(barcode));
-      controller?.resumeCamera();
+      controller.resumeCamera();
 
       Future.delayed(const Duration(milliseconds: 10000), () {
         if (mounted) {
-          controller?.pauseCamera();
+          controller.pauseCamera();
           setState(() => cameraOn = false);
           Navigator.push(context,
               MaterialPageRoute(builder: (BuildContext context) => Main()));
