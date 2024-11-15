@@ -34,6 +34,7 @@ class _MenuState extends State<Menu> {
   String passSlipServerUrl = dotenv.get('PASS_SLIP_URL'); //env
   String serverPhotoUrl =
       dotenv.get('DEFAULT_PHOTO'); //env for default photo placeholder
+  String employeeAvatarUrl = dotenv.get('NEXT_PUBLIC_IMAGE_SERVER_URL');
 
   _getDateTime() {
     if (mounted) {
@@ -57,9 +58,6 @@ class _MenuState extends State<Menu> {
     userId = employeeDetail['userId'];
     position = employeeDetail['assignment']['positionTitle'];
     photoUrl = employeeDetail['photoUrl'];
-    if (photoUrl == '') {
-      photoUrl = '$serverPhotoUrl/KIOSK-DEFAULT-PROFILE.png';
-    }
 
     _getDateTime();
     super.initState();
@@ -136,6 +134,12 @@ class _MenuState extends State<Menu> {
 
   @override
   Widget build(BuildContext context) {
+    String finalPhoto = '$employeeAvatarUrl/$photoUrl';
+
+    if (photoUrl == '') {
+      finalPhoto = '$serverPhotoUrl/KIOSK-DEFAULT-PROFILE.png';
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Active Pass Slips'),
@@ -433,7 +437,7 @@ class _MenuState extends State<Menu> {
                           flex: 5,
                           child: Container(
                               padding: const EdgeInsets.all(20.0),
-                              child: Image(image: NetworkImage(photoUrl)))),
+                              child: Image(image: NetworkImage(finalPhoto)))),
                       Expanded(
                           flex: 1,
                           child: Column(
