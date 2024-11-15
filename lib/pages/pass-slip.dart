@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'package:GSCWD_PassSlip/pages/receipt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -25,18 +24,29 @@ class PassSlipTimeInOut extends StatefulWidget {
   final String timeIn;
   final String timeOut;
 
-
-
-  const PassSlipTimeInOut({super.key, required this.employee, required this.natureOfBusiness, required this.id, required this.employeeId, required this.dateOfApplication, this.obTransportation, required this.estimateHours, required this.purposeDestination, required this.isCancelled, required this.employeeName, required this.supervisorName, required this.supervisorId, required this.status, required this.timeIn, required this.timeOut});
+  const PassSlipTimeInOut(
+      {super.key,
+      required this.employee,
+      required this.natureOfBusiness,
+      required this.id,
+      required this.employeeId,
+      required this.dateOfApplication,
+      this.obTransportation,
+      required this.estimateHours,
+      required this.purposeDestination,
+      required this.isCancelled,
+      required this.employeeName,
+      required this.supervisorName,
+      required this.supervisorId,
+      required this.status,
+      required this.timeIn,
+      required this.timeOut});
 
   final String? timeInTime = null;
-
 
   @override
   State<PassSlipTimeInOut> createState() => _PassSlipTimeInOutState();
 }
-
-
 
 class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
   // const test({Key? key}) : super(key: key);
@@ -63,11 +73,10 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
   String timeIn = '';
   String timeOut = '';
 
-  String? timeOutTime = null;
-  String? timeInTime = null;
+  String? timeOutTime;
+  String? timeInTime;
 
   String passSlipServerUrl = dotenv.get('PASS_SLIP_URL'); //env
-
 
   _getDateTime() {
     if (mounted) {
@@ -77,78 +86,111 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
     }
   }
 
-
-
-
-
   _getPassSlipOut() async {
     if (mounted) {
       setState(() {
-        timeOutTime = DateFormat("MMMM dd, yyyy | hh:mm:ss a").format(DateTime.now());
+        timeOutTime =
+            DateFormat("MMMM dd, yyyy | hh:mm:ss a").format(DateTime.now());
       });
-      setState(() {timeStamp = timeOutTime!;});
+      setState(() {
+        timeStamp = timeOutTime!;
+      });
 
       // set up PATCH request arguments
       final url = Uri.parse('$passSlipServerUrl/api/v1/pass-slip/time-record/');
 
       try {
         // make PATCH request
-        final response = await patch(url, body: {
-          "id": id,
-          "action": "time out"
-        },);
+        final response = await patch(
+          url,
+          body: {"id": id, "action": "time out"},
+        );
 
         // check the status code for the result
         final statusCode = response.statusCode;
         final body = response.body;
-        if(statusCode == 200) {
+        if (statusCode == 200) {
           Future.delayed(const Duration(milliseconds: 100), () {
-            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => Receipt(natureOfBusiness: natureOfBusiness, id: id, employeeId: employeeId, dateOfApplication: dateOfApplication, estimateHours: estimateHours, purposeDestination: purposeDestination, isCancelled: isCancelled, employeeName: employeeName, supervisorName: supervisorName, supervisorId: supervisorId, status: status, obTransportation:obTransportation, timeStamp: timeStamp, passSlipType: 'PASS SLIP OUT', )));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => Receipt(
+                          natureOfBusiness: natureOfBusiness,
+                          id: id,
+                          employeeId: employeeId,
+                          dateOfApplication: dateOfApplication,
+                          estimateHours: estimateHours,
+                          purposeDestination: purposeDestination,
+                          isCancelled: isCancelled,
+                          employeeName: employeeName,
+                          supervisorName: supervisorName,
+                          supervisorId: supervisorId,
+                          status: status,
+                          obTransportation: obTransportation,
+                          timeStamp: timeStamp,
+                          passSlipType: 'PASS SLIP OUT',
+                        )));
           });
         } else {
           _showToast("Error $statusCode");
         }
-
-      }
-      catch (e){
+      } catch (e) {
         _showToast("$e");
       }
-
     }
   }
 
   _getPassSlipIn() async {
     if (mounted) {
       setState(() {
-        timeInTime = DateFormat("MMMM dd, yyyy | hh:mm:ss a").format(DateTime.now());
+        timeInTime =
+            DateFormat("MMMM dd, yyyy | hh:mm:ss a").format(DateTime.now());
       });
-      setState(() {timeStamp = timeInTime!;});
+      setState(() {
+        timeStamp = timeInTime!;
+      });
 
       // set up PATCH request arguments
       final url = Uri.parse('$passSlipServerUrl/api/v1/pass-slip/time-record/');
 
       try {
         // make PATCH request
-        final response = await patch(url, body: {
-          "id": id,
-          "action": "time in"
-        },);
+        final response = await patch(
+          url,
+          body: {"id": id, "action": "time in"},
+        );
 
         // check the status code for the result
         final statusCode = response.statusCode;
         final body = response.body;
-        if(statusCode == 200) {
+        if (statusCode == 200) {
           Future.delayed(const Duration(milliseconds: 100), () {
-            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => Receipt(natureOfBusiness: natureOfBusiness, id: id, employeeId: employeeId, dateOfApplication: dateOfApplication, estimateHours: estimateHours, purposeDestination: purposeDestination, isCancelled: isCancelled, employeeName: employeeName, supervisorName: supervisorName, supervisorId: supervisorId, status: status, obTransportation:obTransportation, timeStamp: timeStamp, passSlipType: 'PASS SLIP IN', )));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => Receipt(
+                          natureOfBusiness: natureOfBusiness,
+                          id: id,
+                          employeeId: employeeId,
+                          dateOfApplication: dateOfApplication,
+                          estimateHours: estimateHours,
+                          purposeDestination: purposeDestination,
+                          isCancelled: isCancelled,
+                          employeeName: employeeName,
+                          supervisorName: supervisorName,
+                          supervisorId: supervisorId,
+                          status: status,
+                          obTransportation: obTransportation,
+                          timeStamp: timeStamp,
+                          passSlipType: 'PASS SLIP IN',
+                        )));
           });
         } else {
           _showToast("Error $statusCode");
         }
-      }
-      catch (e){
+      } catch (e) {
         _showToast("$e");
       }
-
     }
   }
 
@@ -209,23 +251,24 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
           const SizedBox(
             width: 12.0,
           ),
-          Text("$error", softWrap: false,
+          Text("$error",
+              softWrap: false,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)) ,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );
-
 
     fToast.showToast(
       child: toast,
       gravity: ToastGravity.TOP,
       toastDuration: const Duration(seconds: 2),
     );
-
-
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -238,14 +281,12 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
       body: Container(
         decoration: const BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('assets/gwd_logo.png'),
-              fit: BoxFit.fitHeight,
-
-            )
-        ),
+          image: AssetImage('assets/gwd_logo.png'),
+          fit: BoxFit.fitHeight,
+        )),
         child: Column(
           children: [
-            Expanded (
+            Expanded(
               flex: 3,
               child: Container(
                 color: Colors.white.withOpacity(.90),
@@ -256,18 +297,24 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
                           flex: 1,
                           child: Container(
                               padding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
-
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(DateFormat("MMMM dd, yyyy").format(_dateTime!),
-                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
-                                  Text(DateFormat("hh:mm:ss a").format(_dateTime!),
-                                    style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),),
+                                  Text(
+                                    DateFormat("MMMM dd, yyyy")
+                                        .format(_dateTime!),
+                                    style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    DateFormat("hh:mm:ss a").format(_dateTime!),
+                                    style: const TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold),
+                                  ),
                                 ],
-                              )
-                          )
-                      ),
+                              ))),
                       Expanded(
                           flex: 2,
                           child: Container(
@@ -275,21 +322,37 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Type: $natureOfBusiness', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                Text('Date: ${DateFormat.yMMMd().format(DateFormat("yyyy-MM-dd").parse(dateOfApplication))}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                Text('Estimated Hours: $estimateHours', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                Text('Transportation: $obTransportation', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                Text('Purpose: $purposeDestination', textAlign: TextAlign.start,  softWrap: false,
+                                Text('Type: $natureOfBusiness',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                Text(
+                                    'Date: ${DateFormat.yMMMd().format(DateFormat("yyyy-MM-dd").parse(dateOfApplication))}',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                Text('Estimated Hours: $estimateHours',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                Text('Transportation: $obTransportation',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                Text(
+                                  'Purpose: $purposeDestination',
+                                  textAlign: TextAlign.start,
+                                  softWrap: false,
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ),
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ],
                             ),
-                          )
-                      ),
-
-                    ]
-                ),
+                          )),
+                    ]),
               ),
             ),
             Expanded(
@@ -298,85 +361,91 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
                 color: Colors.white.withOpacity(0.90),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-
                   children: [
                     Container(
-                      width:double.infinity,
+                      width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
                       child: ElevatedButton(
-                          onPressed:() {
-                            timeOut != '' ? null :
-                            _getPassSlipOut();
-
-                            },
-                          style: ElevatedButton.styleFrom(backgroundColor: timeOut != '' ? Colors.white12 :  Colors.redAccent),
-                          child: Column (
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(15, 10, 15, 0),
-                                child: Text(timeOut == '' ? '-' :DateFormat.jm().format(DateFormat("hh:mm:ss").parse(timeOut)),
-                                  style: const TextStyle(fontSize: 14), ),
+                        onPressed: () {
+                          timeOut != '' ? null : _getPassSlipOut();
+                        },
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: timeOut != ''
+                                ? Colors.white12
+                                : Colors.redAccent),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(15, 10, 15, 0),
+                              child: Text(
+                                timeOut == ''
+                                    ? '-'
+                                    : DateFormat.jm().format(
+                                        DateFormat("hh:mm:ss").parse(timeOut)),
+                                style: const TextStyle(fontSize: 14),
                               ),
-                              const Padding(
-                                padding: EdgeInsets.fromLTRB(15, 0, 15, 10),
-                                child: Text('PASS SLIP OUT',
-                                  style: TextStyle(fontSize: 20), ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(15, 0, 15, 10),
+                              child: Text(
+                                'PASS SLIP OUT',
+                                style: TextStyle(fontSize: 20),
                               ),
-                            ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
                     Container(
-                      width:double.infinity,
+                      width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
                       child: Visibility(
-                        visible: natureOfBusiness == 'Undertime' || natureOfBusiness == 'Half Day' ? false : true,
+                        visible: natureOfBusiness == 'Undertime' ||
+                                natureOfBusiness == 'Half Day'
+                            ? false
+                            : true,
                         child: ElevatedButton(
-                            onPressed: () {(timeOut == '' || timeIn != '') ? null :
-                            _getPassSlipIn();
-
-                              },
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: (timeOut == '' || timeIn != '') ? Colors.white12 :  Colors.lightGreen[500]),
+                          onPressed: () {
+                            (timeOut == '' || timeIn != '')
+                                ? null
+                                : _getPassSlipIn();
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: (timeOut == '' || timeIn != '')
+                                  ? Colors.white12
+                                  : Colors.lightGreen[500]),
                           child: Column(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(15, 10, 15, 0),
-                                child: Text(timeIn == '' ? '-' :DateFormat.jm().format(DateFormat("hh:mm:ss").parse(timeIn)),
-                                  style: const TextStyle(fontSize: 14), ),
+                                padding:
+                                    const EdgeInsets.fromLTRB(15, 10, 15, 0),
+                                child: Text(
+                                  timeIn == ''
+                                      ? '-'
+                                      : DateFormat.jm().format(
+                                          DateFormat("hh:mm:ss").parse(timeIn)),
+                                  style: const TextStyle(fontSize: 14),
+                                ),
                               ),
                               const Padding(
                                 padding: EdgeInsets.fromLTRB(15, 0, 15, 10),
-                                child: Text('PASS SLIP IN',
-                                  style: TextStyle(fontSize: 20), ),
+                                child: Text(
+                                  'PASS SLIP IN',
+                                  style: TextStyle(fontSize: 20),
+                                ),
                               ),
                             ],
                           ),
-
-
-
-
-
                         ),
                       ),
                     ),
-
                   ],
                 ),
               ),
             ),
-
-
           ],
         ),
       ),
-
-
     );
   }
-
-
-
 }
-
-
