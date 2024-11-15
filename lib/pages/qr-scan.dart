@@ -196,12 +196,11 @@ class _QrScanState extends State<QrScan> {
           centerTitle: true,
           backgroundColor: Colors.lightBlue,
         ),
-        body: Container(
-            child: Stack(alignment: Alignment.center, children: <Widget>[
+        body: Stack(alignment: Alignment.center, children: <Widget>[
           buildQrView(context),
           Positioned(bottom: 10, child: buildResult()),
           Positioned(top: 10, child: buildControlButtons()),
-        ])));
+        ]));
   }
 
   Widget buildControlButtons() => Container(
@@ -268,8 +267,10 @@ class _QrScanState extends State<QrScan> {
         if (mounted) {
           controller.pauseCamera();
           setState(() => cameraOn = false);
-          Navigator.push(context,
-              MaterialPageRoute(builder: (BuildContext context) => Main()));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (BuildContext context) => const Main()));
           _showToast("Time Out");
         }
       });

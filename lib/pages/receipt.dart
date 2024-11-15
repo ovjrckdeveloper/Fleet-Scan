@@ -216,7 +216,8 @@ class _ReceiptState extends State<Receipt> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (BuildContext context) => Main()));
+                                    builder: (BuildContext context) =>
+                                        const Main()));
                           },
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue),

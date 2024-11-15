@@ -410,7 +410,7 @@ class _MenuState extends State<Menu> {
                                     padding: const EdgeInsets.all(50),
                                     child: const Center(
                                       child: Text(
-                                        "No Pass Slip Found",
+                                        "No Approved Pass Slip Found",
                                         style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.normal,
