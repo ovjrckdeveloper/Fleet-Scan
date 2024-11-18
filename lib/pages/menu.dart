@@ -206,7 +206,11 @@ class _MenuState extends State<Menu> {
                                                         ps['timeOut'] ?? '')));
                                   },
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.lightBlue[400]),
+                                    backgroundColor: Colors.lightBlue[400],
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                  ),
                                   child: Padding(
                                     padding:
                                         const EdgeInsets.fromLTRB(0, 12, 0, 12),

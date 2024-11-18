@@ -382,14 +382,16 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
                                     ? '-'
                                     : DateFormat.jm().format(
                                         DateFormat("hh:mm:ss").parse(timeOut)),
-                                style: const TextStyle(fontSize: 14),
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.white),
                               ),
                             ),
                             const Padding(
                               padding: EdgeInsets.fromLTRB(15, 0, 15, 10),
                               child: Text(
                                 'PASS SLIP OUT',
-                                style: TextStyle(fontSize: 20),
+                                style: TextStyle(
+                                    fontSize: 20, color: Colors.white),
                               ),
                             ),
                           ],
@@ -424,14 +426,16 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
                                       ? '-'
                                       : DateFormat.jm().format(
                                           DateFormat("hh:mm:ss").parse(timeIn)),
-                                  style: const TextStyle(fontSize: 14),
+                                  style: const TextStyle(
+                                      fontSize: 14, color: Colors.white),
                                 ),
                               ),
                               const Padding(
                                 padding: EdgeInsets.fromLTRB(15, 0, 15, 10),
                                 child: Text(
                                   'PASS SLIP IN',
-                                  style: TextStyle(fontSize: 20),
+                                  style: TextStyle(
+                                      fontSize: 20, color: Colors.white),
                                 ),
                               ),
                             ],
