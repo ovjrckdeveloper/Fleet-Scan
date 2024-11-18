@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.gscwd.gscwd_kiosk">
+    package="com.gscwd.gscwd_pass_slip">
    <application
         android:label="GSCWD Pass Slip 2024"
         android:name="${applicationName}"

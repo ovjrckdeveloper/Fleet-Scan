@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 
 // List<PassSlip> modelPassSlipsFromJson(PassSlip str) => List<PassSlip>.from(json.decode(str as String).map((x) => PassSlip.fromJson(x)));
 // String modelPassSlipsToJson(List<PassSlip> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
@@ -44,49 +42,44 @@ class PassSlip {
   });
 
   factory PassSlip.fromJson(Map<String, dynamic> json) => PassSlip(
-    createdAt: json["createdAt"],
-    updatedAt: json["updatedAt"],
-    deletedAt: json["deletedAt"],
-    id: json["id"],
-    employeeId:json["employeeId"],
-    dateOfApplication: json["dateOfApplication"],
-    natureOfBusiness: json["natureOfBusiness"],
-    obTransportation: json["obTransportation"],
-    estimateHours: json["estimateHours"],
-    purposeDestination: json["purposeDestination"],
-    isCancelled: json["isCancelled"],
-    employeeName: json["employeeName"],
-    supervisorName: json["supervisorName"],
-    supervisorId: json["supervisorId"],
-    status: json["status"],
-    timeIn: json["timeIn"],
-    timeOut: json["timeOut"],
-
-  );
+        createdAt: json["createdAt"],
+        updatedAt: json["updatedAt"],
+        deletedAt: json["deletedAt"],
+        id: json["id"],
+        employeeId: json["employeeId"],
+        dateOfApplication: json["dateOfApplication"],
+        natureOfBusiness: json["natureOfBusiness"],
+        obTransportation: json["obTransportation"],
+        estimateHours: json["estimateHours"],
+        purposeDestination: json["purposeDestination"],
+        isCancelled: json["isCancelled"],
+        employeeName: json["employeeName"],
+        supervisorName: json["supervisorName"],
+        supervisorId: json["supervisorId"],
+        status: json["status"],
+        timeIn: json["timeIn"],
+        timeOut: json["timeOut"],
+      );
   Map<String, dynamic> toJson() => {
-    'createdAt': createdAt,
-    'updatedAt': updatedAt,
-    'deletedAt': deletedAt,
-    'id': id,
-    'employeeId':employeeId,
-    'dateOfApplication': dateOfApplication,
-    'natureOfBusiness': natureOfBusiness,
-    'obTransportation': obTransportation,
-    'estimateHours': estimateHours,
-    'purposeDestination': purposeDestination,
-    'isCancelled': isCancelled,
-    'employeeName': employeeName,
-    'supervisorName': supervisorName,
-    'supervisorId': supervisorId,
-    'status': status,
-    'timeIn': timeIn,
-    'timeOut': timeOut,
-
-  };
+        'createdAt': createdAt,
+        'updatedAt': updatedAt,
+        'deletedAt': deletedAt,
+        'id': id,
+        'employeeId': employeeId,
+        'dateOfApplication': dateOfApplication,
+        'natureOfBusiness': natureOfBusiness,
+        'obTransportation': obTransportation,
+        'estimateHours': estimateHours,
+        'purposeDestination': purposeDestination,
+        'isCancelled': isCancelled,
+        'employeeName': employeeName,
+        'supervisorName': supervisorName,
+        'supervisorId': supervisorId,
+        'status': status,
+        'timeIn': timeIn,
+        'timeOut': timeOut,
+      };
 }
-
-
-
 
 /// The base class for the different types of items the list can contain.
 abstract class ListItem {
@@ -136,32 +129,60 @@ class MessageItem implements ListItem {
   String timeIn;
   String timeOut;
 
-
-  MessageItem(this.natureOfBusiness, this.updatedAt, this.deletedAt, this.id, this.employeeId, this.dateOfApplication, this.obTransportation, this.estimateHours, this.purposeDestination, this.isCancelled, this.employeeName, this.supervisorName, this.supervisorId, this.createdAt, this.status, this.timeIn, this.timeOut);
+  MessageItem(
+      this.natureOfBusiness,
+      this.updatedAt,
+      this.deletedAt,
+      this.id,
+      this.employeeId,
+      this.dateOfApplication,
+      this.obTransportation,
+      this.estimateHours,
+      this.purposeDestination,
+      this.isCancelled,
+      this.employeeName,
+      this.supervisorName,
+      this.supervisorId,
+      this.createdAt,
+      this.status,
+      this.timeIn,
+      this.timeOut);
 
   @override
   Widget buildTitle(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(natureOfBusiness, style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold,)),
-      Text(dateOfApplication, style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold,)),
-    ],
-  );
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(natureOfBusiness,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              )),
+          Text(dateOfApplication,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              )),
+        ],
+      );
 
   @override
   Widget buildSubtitle(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text('Estimated Hours: $estimateHours', style: TextStyle(fontSize: 12, color: Colors.white)),
-      Text('Purpose: $purposeDestination', style: TextStyle(fontSize: 12, color: Colors.white)),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Estimated Hours: $estimateHours',
+              style: const TextStyle(fontSize: 12, color: Colors.white)),
+          Text('Purpose: $purposeDestination',
+              style: const TextStyle(fontSize: 12, color: Colors.white)),
+        ],
+      );
 }
 
 final items = List<ListItem>.generate(
-  4,
-      (i) => i == 0
-      ?
-        MessageItem('', '','','','','','','','','','','','','','','','')
-      : MessageItem('', '','','','','','','','','','','','','','','','')
-);
+    4,
+    (i) => i == 0
+        ? MessageItem(
+            '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')
+        : MessageItem('', '', '', '', '', '', '', '', '', '', '', '', '', '',
+            '', '', ''));
