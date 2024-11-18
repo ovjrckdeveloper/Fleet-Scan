@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:GSCWD_PassSlip/pages/pass-slip.dart';
-import 'package:GSCWD_PassSlip/pages/qr-scan.dart';
+import 'package:GSCWD_PassSlip/pages/pass_slip.dart';
+import 'package:GSCWD_PassSlip/pages/qr_scan.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:GSCWD_PassSlip/pages/menu.dart';
 import 'package:GSCWD_PassSlip/pages/receipt.dart';
@@ -110,7 +110,7 @@ class _MainState extends State<Main> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                '2024 Prod Version 6 (10-24-2024)',
+                '2024 Prod Version 6 2024',
                 style: TextStyle(fontSize: 8, color: Colors.black),
               ),
             ],

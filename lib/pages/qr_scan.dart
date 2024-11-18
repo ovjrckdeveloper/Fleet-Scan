@@ -5,7 +5,7 @@ import 'package:GSCWD_PassSlip/main.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:GSCWD_PassSlip/pages/menu.dart';
-import 'package:GSCWD_PassSlip/types/employeeDetails.dart';
+import 'package:GSCWD_PassSlip/types/employeedetails.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
 

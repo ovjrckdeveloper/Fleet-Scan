@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:GSCWD_PassSlip/pages/pass-slip.dart';
+import 'package:GSCWD_PassSlip/pages/pass_slip.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
@@ -108,9 +108,10 @@ class _MenuState extends State<Menu> {
 
   Future getPassSlipList() async {
     try {
+      isLoading = true;
       final passSlipResponse = await http.get(
           Uri.parse('$passSlipServerUrl/api/v1/pass-slip/$userId/current'));
-      setState(() => isLoading = true);
+
       if (passSlipResponse.statusCode == 200) {
         String receivedPassSlips = passSlipResponse.body;
         approvedPassSlips = json.decode(receivedPassSlips);
@@ -118,11 +119,13 @@ class _MenuState extends State<Menu> {
             .where((i) => (i['timeIn'] != '' || i['timeOut'] != ''))
             .toList();
         if (activePassSlip.isNotEmpty) {
+          isLoading = false;
           passSlipsToShow = activePassSlip;
-          setState(() => isLoading = false);
+          // setState(() => isLoading = false);
         } else {
+          isLoading = false;
           passSlipsToShow = approvedPassSlips;
-          setState(() => isLoading = false);
+          // setState(() => isLoading = false);
         }
       } else {
         _showToast("Error ${passSlipResponse.statusCode}");
@@ -162,269 +165,240 @@ class _MenuState extends State<Menu> {
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
                     width: double.infinity,
-                    child: isLoading == true
-                        ? Container(
-                            padding: const EdgeInsets.all(0),
-                            margin: const EdgeInsets.all(50),
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : isLoading == false && passSlipsToShow.isNotEmpty
-                            ? Column(
-                                children: passSlipsToShow.map((ps) {
-                                  return Container(
-                                    margin:
-                                        const EdgeInsets.fromLTRB(8, 6, 8, 6),
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (BuildContext
-                                                        context) =>
-                                                    PassSlipTimeInOut(
-                                                        employee:
-                                                            widget.employee,
-                                                        natureOfBusiness: ps[
-                                                            'natureOfBusiness'],
-                                                        id: ps['id'],
-                                                        employeeId:
-                                                            ps['employeeId'],
-                                                        dateOfApplication: ps[
-                                                            'dateOfApplication'],
-                                                        estimateHours:
-                                                            ps['estimateHours'],
-                                                        purposeDestination: ps[
-                                                            'purposeDestination'],
-                                                        isCancelled:
-                                                            ps['isCancelled'],
-                                                        employeeName:
-                                                            ps['employeeName'],
-                                                        supervisorName: ps[
-                                                            'supervisorName'],
-                                                        supervisorId:
-                                                            ps['supervisorId'],
-                                                        status: ps['status'],
-                                                        obTransportation: ps[
-                                                            'obTransportation'],
-                                                        timeIn:
-                                                            ps['timeIn'] ?? '',
-                                                        timeOut:
-                                                            ps['timeOut'] ??
-                                                                '')));
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              Colors.lightBlue[400]),
-                                      child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            0, 12, 0, 12),
-                                        child: Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      ps['natureOfBusiness'],
-                                                      style: const TextStyle(
-                                                          fontSize: 15,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.white),
-                                                    ),
-                                                    Text(
-                                                      DateFormat.yMMMd().format(
-                                                          DateFormat(
-                                                                  "yyyy-MM-dd")
-                                                              .parse(ps[
-                                                                  'dateOfApplication'])),
-                                                      style: const TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                          color: Colors.white),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Visibility(
-                                                  visible: ps['natureOfBusiness'] ==
-                                                              'Undertime' ||
-                                                          ps['natureOfBusiness'] ==
-                                                              'Half Day'
-                                                      ? false
-                                                      : true,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      const Text(
-                                                        "Hours:",
-                                                        style: TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .normal,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                      Text(
+                    child: isLoading == false && passSlipsToShow.isNotEmpty
+                        ? Column(
+                            children: passSlipsToShow.map((ps) {
+                              return Container(
+                                margin: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (BuildContext context) =>
+                                                PassSlipTimeInOut(
+                                                    employee: widget.employee,
+                                                    natureOfBusiness:
+                                                        ps['natureOfBusiness'],
+                                                    id: ps['id'],
+                                                    employeeId:
+                                                        ps['employeeId'],
+                                                    dateOfApplication:
+                                                        ps['dateOfApplication'],
+                                                    estimateHours:
                                                         ps['estimateHours'],
-                                                        style: const TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .normal,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ],
+                                                    purposeDestination: ps[
+                                                        'purposeDestination'],
+                                                    isCancelled:
+                                                        ps['isCancelled'],
+                                                    employeeName:
+                                                        ps['employeeName'],
+                                                    supervisorName:
+                                                        ps['supervisorName'],
+                                                    supervisorId:
+                                                        ps['supervisorId'],
+                                                    status: ps['status'],
+                                                    obTransportation:
+                                                        ps['obTransportation'],
+                                                    timeIn: ps['timeIn'] ?? '',
+                                                    timeOut:
+                                                        ps['timeOut'] ?? '')));
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.lightBlue[400]),
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(0, 12, 0, 12),
+                                    child: Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  ps['natureOfBusiness'],
+                                                  style: const TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.white),
+                                                ),
+                                                Text(
+                                                  DateFormat.yMMMd().format(
+                                                      DateFormat("yyyy-MM-dd")
+                                                          .parse(ps[
+                                                              'dateOfApplication'])),
+                                                  style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.normal,
+                                                      color: Colors.white),
+                                                ),
+                                              ],
+                                            ),
+                                            Visibility(
+                                              visible: ps['natureOfBusiness'] ==
+                                                          'Undertime' ||
+                                                      ps['natureOfBusiness'] ==
+                                                          'Half Day'
+                                                  ? false
+                                                  : true,
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  const Text(
+                                                    "Hours:",
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: Colors.white),
+                                                  ),
+                                                  Text(
+                                                    ps['estimateHours'],
+                                                    style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: Colors.white),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Expanded(
+                                                  flex: 1,
+                                                  child: Text(
+                                                    "Purpose:",
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: Colors.white),
                                                   ),
                                                 ),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Expanded(
-                                                      flex: 1,
-                                                      child: Text(
-                                                        "Purpose:",
-                                                        style: TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .normal,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                    Expanded(
-                                                      flex: 2,
-                                                      child: Text(
-                                                        ps['purposeDestination'],
-                                                        textAlign:
-                                                            TextAlign.end,
-                                                        softWrap: false,
-                                                        maxLines: 3,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .normal,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Text(
-                                                      "Time Out:",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                          color: Colors.white),
-                                                    ),
-                                                    Text(
-                                                      ps['timeOut'] == null
-                                                          ? 'None'
-                                                          : DateFormat.jm()
-                                                              .format(DateFormat(
-                                                                      "hh:mm:ss")
-                                                                  .parse(ps[
-                                                                      'timeOut'])),
-                                                      style: const TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                          color: Colors.white),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Visibility(
-                                                  visible: ps['natureOfBusiness'] ==
-                                                              'Undertime' ||
-                                                          ps['natureOfBusiness'] ==
-                                                              'Half Day'
-                                                      ? false
-                                                      : true,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      const Text(
-                                                        "Time In:",
-                                                        style: TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .normal,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                      Text(
-                                                        ps['timeIn'] == null
-                                                            ? 'None'
-                                                            : DateFormat.jm()
-                                                                .format(DateFormat(
-                                                                        "hh:mm:ss")
-                                                                    .parse(ps[
-                                                                        'timeIn'])),
-                                                        style: const TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .normal,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ],
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    ps['purposeDestination'],
+                                                    textAlign: TextAlign.end,
+                                                    softWrap: false,
+                                                    maxLines: 3,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: Colors.white),
                                                   ),
                                                 ),
-                                              ]),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              )
-                            : isLoading == false && passSlipsToShow.isEmpty
-                                ? Container(
-                                    padding: const EdgeInsets.all(50),
-                                    child: const Center(
-                                      child: Text(
-                                        "No Approved Pass Slip Found",
-                                        style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.normal,
-                                            color: Colors.black87),
-                                      ),
-                                    ),
-                                  )
-                                : Container(
-                                    padding: const EdgeInsets.all(0),
-                                    margin: const EdgeInsets.all(50),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Time Out:",
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.normal,
+                                                      color: Colors.white),
+                                                ),
+                                                Text(
+                                                  ps['timeOut'] == null
+                                                      ? 'None'
+                                                      : DateFormat.jm().format(
+                                                          DateFormat("hh:mm:ss")
+                                                              .parse(ps[
+                                                                  'timeOut'])),
+                                                  style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.normal,
+                                                      color: Colors.white),
+                                                ),
+                                              ],
+                                            ),
+                                            Visibility(
+                                              visible: ps['natureOfBusiness'] ==
+                                                          'Undertime' ||
+                                                      ps['natureOfBusiness'] ==
+                                                          'Half Day'
+                                                  ? false
+                                                  : true,
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  const Text(
+                                                    "Time In:",
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: Colors.white),
+                                                  ),
+                                                  Text(
+                                                    ps['timeIn'] == null
+                                                        ? 'None'
+                                                        : DateFormat.jm()
+                                                            .format(DateFormat(
+                                                                    "hh:mm:ss")
+                                                                .parse(ps[
+                                                                    'timeIn'])),
+                                                    style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: Colors.white),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ]),
                                     ),
                                   ),
+                                ),
+                              );
+                            }).toList(),
+                          )
+                        : isLoading == false && passSlipsToShow.isEmpty
+                            ? Container(
+                                padding: const EdgeInsets.all(50),
+                                child: const Center(
+                                  child: Text(
+                                    "No Approved Pass Slip Found",
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.normal,
+                                        color: Colors.black87),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                padding: const EdgeInsets.all(0),
+                                margin: const EdgeInsets.all(50),
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
                   ),
                 ),
               ),

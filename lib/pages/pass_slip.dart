@@ -108,7 +108,7 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
 
         // check the status code for the result
         final statusCode = response.statusCode;
-        final body = response.body;
+        // final body = response.body;
         if (statusCode == 200) {
           Future.delayed(const Duration(milliseconds: 100), () {
             Navigator.push(
@@ -162,7 +162,7 @@ class _PassSlipTimeInOutState extends State<PassSlipTimeInOut> {
 
         // check the status code for the result
         final statusCode = response.statusCode;
-        final body = response.body;
+        // final body = response.body;
         if (statusCode == 200) {
           Future.delayed(const Duration(milliseconds: 100), () {
             Navigator.push(

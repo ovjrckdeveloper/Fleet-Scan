@@ -44,7 +44,7 @@ class Receipt extends StatefulWidget {
 class _ReceiptState extends State<Receipt> {
   // const test({Key? key}) : super(key: key);
 
-  DateTime? _dateTime;
+  DateTime? dateTime;
 
   String id = '';
   String employeeId = '';
@@ -64,7 +64,7 @@ class _ReceiptState extends State<Receipt> {
   _getDateTime() {
     if (mounted) {
       setState(() {
-        _dateTime = DateTime.now();
+        dateTime = DateTime.now();
       });
     }
   }

@@ -1,4 +1,4 @@
-package com.gscwd.gscwd_kiosk;
+package com.gscwd.gscwd_pass_slip;
 
 import io.flutter.embedding.android.FlutterActivity;
 
