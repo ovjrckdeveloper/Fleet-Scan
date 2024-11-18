@@ -227,7 +227,8 @@ class _ReceiptState extends State<Receipt> {
                                 padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
                                 child: Text(
                                   'EXIT',
-                                  style: TextStyle(fontSize: 20),
+                                  style: TextStyle(
+                                      fontSize: 20, color: Colors.white),
                                 ),
                               ),
                             ],
