@@ -13,6 +13,7 @@ class FleetScanApp extends StatefulWidget {
   State<FleetScanApp> createState() => _FleetScanAppState();
 }
 
+
 class _FleetScanAppState extends State<FleetScanApp> {
   final _navigator = GlobalKey<NavigatorState>();
   late final ErpSession _session;
