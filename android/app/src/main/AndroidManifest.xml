@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.gscwd.gscwd_pass_slip">
+    package="com.gscwd.fleet_scan">
    <application
-        android:label="GSCWD Pass Slip 2024"
+        android:label="Fleet Scan"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
