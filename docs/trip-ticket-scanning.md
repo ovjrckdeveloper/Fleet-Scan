@@ -88,7 +88,28 @@ install Server Scripts through this workspace connection.
 
 Both scan-date fields are **Datetime**. The app validates their date and time
 against the separate date and time fields for each action. All four values for an action come from one server timestamp.
-The other action's fields are preserved.
+The other action's scan fields are preserved.
+
+To enable mileage on mobile scans, keep `fleet_get_tracksolid_mileage` enabled
+and accessible to the scanner account. The account also needs Read access to
+the linked Vehicle and its `custom_imei` field. Enable **Allow on Submit** for
+`km_before` and `km_after` and give the scanner role write access to them.
+Data fields store mileage as text with three decimal places. Float and Currency
+fields store numeric values and should have at least three decimal places of precision.
+
+- **OUT** uses the latest confirmed Tracksolid trip end at or before OUT in a
+  72-hour lookback. The end odometer is converted from meters to kilometers.
+- **IN** uses the confirmed full-window summary's end mileage. It keeps an
+  existing OUT reading and uses the summary start mileage if OUT mileage is missing.
+- When Tracksolid has no complete reading, the scan still saves its timestamps
+  and leaves missing kilometer fields alone. An IN scan can recover missing OUT
+  mileage. An existing browser mileage script can still retry missing readings.
+
+After installing the updated API Server Script, scan OUT and IN on a test ticket
+with a known GPS history while its Desk form is closed. Verify the stored fields
+in the Trip Ticket list or through the resource API before opening the form.
+The scan waits for the Tracksolid lookup. Verify it completes within the app's
+30-second request timeout with your live integration.
 
 ## Server behavior
 
@@ -104,7 +125,7 @@ Existing data is never overwritten; arrival requires a recorded departure.
 Both user selection and server scan order are checked; arrival cannot precede
 the server's recorded departure timestamp.
 
-The four fields are applied to the locked document and saved via
+The scan fields and any confirmed mileage are applied to the locked document and saved via
 `frappe.client.save`, which requires POST/PUT and runs normal permission,
 controller and submitted-document validation. No `ignore_permissions`,
 `ignore_validate_update_after_submit` or direct database update is used.
