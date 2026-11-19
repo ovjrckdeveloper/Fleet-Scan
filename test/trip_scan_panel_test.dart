@@ -36,7 +36,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       final doc = <String, dynamic>{
         'name': 'TRIP-TEST', 'driver': 'Juan', 'vehicle': 'F-001',
-        if (stage >= 1) ...{'custom_out_date': '2026-11-12', 'out': '00:01:02'},
+        if (stage >= 1) ...{'custom_out_date': '2026-11-12', 'out': '0:01:02'},
         if (stage == 2) ...{'custom_in_date': '2026-11-13', 'in': '12:42:14'},
       };
       await tester.pumpWidget(MaterialApp(home: Scaffold(body: TripScanPanel(

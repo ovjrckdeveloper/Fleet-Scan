@@ -131,9 +131,15 @@ class _TripScanPanelState extends State<TripScanPanel> {
     );
   }
 
-  Widget _existingScanRow(String label, DateTime timestamp, String? employeeName) =>
+  Widget _existingScanRow(String label, DateTime? timestamp, String? employeeName) =>
       Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        _scanTimeRow(Icons.event_available_outlined, label, timestamp),
+        if (timestamp != null)
+          _scanTimeRow(Icons.event_available_outlined, label, timestamp)
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: 12, left: 34, bottom: 4),
+            child: Text('$label · Date / Time unavailable'),
+          ),
         Padding(
           padding: const EdgeInsets.only(left: 34, bottom: 12),
           child: Text('Scanned by: ${employeeName ?? 'Name unavailable'}',
@@ -277,14 +283,15 @@ class _TripScanPanelState extends State<TripScanPanel> {
             ),
           ),
         ),
-      if (_departureAt != null || _arrivalAt != null) ...[
-        const SizedBox(height: 12),
-        if (_receipt?.action != TripScanAction.departure && _departureAt != null)
-          _existingScanRow('Departure (OUT)', _departureAt!, _details?.departureEmployeeName),
-        if (_receipt == null && _departureAt != null && _arrivalAt != null)
+      if (_receipt?.action != TripScanAction.departure &&
+          (_departureAt != null || _status == TripTicketStatus.onTrip ||
+              _status == TripTicketStatus.completed))
+        _existingScanRow('Departure (OUT)', _departureAt, _details?.departureEmployeeName),
+      if (_receipt?.action != TripScanAction.arrival &&
+          (_arrivalAt != null || _status == TripTicketStatus.completed)) ...[
+        if (_departureAt != null || _status == TripTicketStatus.completed)
           const Divider(height: 1),
-        if (_receipt?.action != TripScanAction.arrival && _arrivalAt != null)
-          _existingScanRow('Arrival (IN)', _arrivalAt!, _details?.arrivalEmployeeName),
+        _existingScanRow('Arrival (IN)', _arrivalAt, _details?.arrivalEmployeeName),
       ],
       if (_detailsError != null) ...[
         const SizedBox(height: 12),

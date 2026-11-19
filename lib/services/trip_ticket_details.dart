@@ -42,6 +42,15 @@ class TripTicketDetails {
       return value is String ? value.trim() : '';
     }
     bool has(String field) => doc[field] != null && doc[field] != '';
+    DateTime? scanTime(String dateField, String timeField) {
+      if (!has(dateField) || !has(timeField)) return null;
+      // ERPNext can serialize Time as H:mm:ss (for example, 8:37:00).
+      final time = value(timeField);
+      final colon = time.indexOf(':');
+      final normalized = colon == 1 ? '0$time' : time;
+      return DateTime.tryParse('${value(dateField)} $normalized');
+    }
+
     final departure = ['custom_out_date', 'out',
       'custom_security_on_duty_departure', 'custom_departure_scan_date'];
     final arrival = ['custom_in_date', 'in',
@@ -69,8 +78,8 @@ class TripTicketDetails {
       status: status,
       departureEmployeeName: departureEmployeeName,
       arrivalEmployeeName: arrivalEmployeeName,
-      departureAt: hasOut ? DateTime.tryParse('${value('custom_out_date')} ${value('out')}') : null,
-      arrivalAt: hasIn ? DateTime.tryParse('${value('custom_in_date')} ${value('in')}') : null,
+      departureAt: scanTime('custom_out_date', 'out'),
+      arrivalAt: scanTime('custom_in_date', 'in'),
     );
   }
 }
