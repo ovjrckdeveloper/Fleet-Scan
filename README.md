@@ -29,6 +29,19 @@ The default ERPNext site is https://tubigconnect.gscwd.app. Override only the si
 URL with `--dart-define=FRAPPE_URL=https://your-erp-site.example` if needed.
 Android application ID: `com.gscwd.fleet_scan`. Startup needs no .env file.
 
+### Remembered guards on a shared scanner
+
+Each guard signs in normally once. After ERPNext verifies the guard's account
+and Fleet Scanner Operator role, the app saves their name and login email on
+this phone. On later shifts, tap the email field and select the guard's name
+to fill the email and focus the password. Passwords, verification codes and
+sessions are never saved. ERPNext checks the guard's current role every time,
+even if their name is still on the phone.
+
+No roster Server Script or API credentials are needed. If you installed
+`fleet_scanner_operator_roster` for a previous build, you can disable that
+script and revoke the dedicated roster reader credentials.
+
 Session cookies are held only in memory, so restarting the app requires sign-in.
 Use **Sign out** to invalidate the session and return to login. Browser session
 login is not configured; use the Android app.

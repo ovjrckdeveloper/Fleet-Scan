@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'operator_roster.dart';
 import 'trip_scan_record.dart';
 import 'trip_ticket_details.dart';
 
@@ -160,6 +161,10 @@ class ErpSession extends ChangeNotifier {
     final name = data['full_name'];
     _fullName = name is String && name.trim().isNotEmpty ? name.trim() : null;
     await verifyAccess();
+    final user = _user;
+    if (user != null) {
+      await RememberedOperators.remember(site, (name: _fullName ?? user, email: user));
+    }
   }
 
   /// Rechecks identity and roles before opening the camera. The server must
@@ -177,6 +182,7 @@ class ErpSession extends ChangeNotifier {
         throw const ErpAuthException('Cannot verify your scanner permissions. Contact your ERPNext administrator.');
       }
       if (!roles.contains('Fleet Scanner Operator')) {
+        await RememberedOperators.forget(site, identity);
         throw const ErpAuthException('You are not assigned the Fleet Scanner Operator role. Please contact your ERPNext administrator.');
       }
       _user = identity;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/erp_session.dart';
+import '../services/operator_roster.dart';
 
 class ErpLogin extends StatefulWidget {
   final ErpSession session;
@@ -14,6 +15,20 @@ class _ErpLoginState extends State<ErpLogin> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   final _code = TextEditingController();
+  final _usernameFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  List<FleetOperator> _operators = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberedOperators();
+  }
+
+  Future<void> _loadRememberedOperators() async {
+    final operators = await RememberedOperators.read(widget.session.site);
+    if (mounted) setState(() => _operators = operators);
+  }
+
   bool _busy = false;
   bool _obscure = true;
   String? _error;
@@ -23,6 +38,8 @@ class _ErpLoginState extends State<ErpLogin> {
     _username.dispose();
     _password.dispose();
     _code.dispose();
+    _usernameFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -37,7 +54,10 @@ class _ErpLoginState extends State<ErpLogin> {
         await widget.session.login(_username.text, _password.text);
       }
     } on ErpAuthException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) {
+        setState(() => _error = error.message);
+        await _loadRememberedOperators();
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'Sign-in could not be completed. Please try again.');
     } finally {
@@ -113,6 +133,7 @@ class _ErpLoginState extends State<ErpLogin> {
                             child: TextFormField(
                               key: const ValueKey('login-username'),
                               controller: _username,
+                              focusNode: _usernameFocus,
                               enabled: !_busy,
                               decoration: _fieldDecoration('jane@example.com', Icons.mail_outline_rounded).copyWith(
                                 hintStyle: const TextStyle(color: Color(0xFF80858D), fontSize: 16)),
@@ -124,12 +145,41 @@ class _ErpLoginState extends State<ErpLogin> {
                               validator: (value) => value == null || value.trim().isEmpty ? 'Enter your ERPNext username.' : null,
                             ),
                           ),
+                          if (_operators.isNotEmpty && !_busy)
+                            ListenableBuilder(
+                              listenable: _usernameFocus,
+                              builder: (context, _) {
+                                if (!_usernameFocus.hasFocus) return const SizedBox.shrink();
+                                return ConstrainedBox(
+                                  constraints: const BoxConstraints(maxHeight: 180),
+                                  child: ListView.builder(
+                                    primary: false,
+                                    shrinkWrap: true,
+                                    padding: EdgeInsets.zero,
+                                    itemCount: _operators.length,
+                                    itemBuilder: (context, index) {
+                                      final operator = _operators[index];
+                                      return ListTile(
+                                        title: Text(operator.name),
+                                        subtitle: Text(operator.email),
+                                        onTap: () {
+                                          if (_username.text != operator.email) _password.clear();
+                                          _username.text = operator.email;
+                                          _passwordFocus.requestFocus();
+                                        },
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                           const SizedBox(height: 16),
                           Semantics(
                             label: 'Password',
                             child: TextFormField(
                               key: const ValueKey('login-password'),
                               controller: _password,
+                              focusNode: _passwordFocus,
                               enabled: !_busy,
                               obscureText: _obscure,
                               autocorrect: false,
