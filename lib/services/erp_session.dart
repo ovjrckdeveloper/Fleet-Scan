@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'equipment_gate_pass.dart';
 import 'operator_roster.dart';
 import 'trip_scan_record.dart';
 import 'trip_ticket_details.dart';
@@ -108,6 +109,12 @@ class ErpSession extends ChangeNotifier {
     }
     if (response.statusCode == 429) {
       throw const ErpAuthException('Too many sign-in attempts. Wait before trying again.', statusCode: 429);
+    }
+    if (includeServerReason && [404, 417].contains(response.statusCode)) {
+      throw ErpAuthException(
+        'HTTP ${response.statusCode}: ${_serverReason(response.body)}',
+        statusCode: response.statusCode,
+      );
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ErpAuthException('ERPNext request failed (HTTP ${response.statusCode}). Please try again or contact your administrator.', statusCode: response.statusCode);
@@ -435,6 +442,110 @@ class ErpSession extends ChangeNotifier {
       return TripScanReceipt(ticket: receipt.ticket, employee: receipt.employee,
           user: receipt.user, date: receipt.date, time: receipt.time,
           action: receipt.action, employeeName: name);
+    } finally {
+      _tripSaveInFlight = false;
+    }
+  }
+
+  String _gatePassId(String contents) {
+    final id = contents.trim();
+    if (id.isEmpty || id.length > 140 ||
+        RegExp(r'[\r\n]|^(https?:|\{)', caseSensitive: false).hasMatch(id)) {
+      throw const TripScanException('Scan a QR containing only the Gate Pass ID.');
+    }
+    if (!signedIn || _sid == null) {
+      throw const TripScanException('Please sign in again.');
+    }
+    return id;
+  }
+
+  Map<String, dynamic> _gatePassResult(Map<String, dynamic> response,
+      {bool recording = false}) {
+    final result = response['message'];
+    if (result is Map<String, dynamic> &&
+        result['contract'] == equipmentGatePassContract) {
+      if (result['success'] == true) return result;
+      if (result['success'] == false) {
+        if (result['code'] == 'permission_denied') _clear();
+        final error = result['error'];
+        throw TripScanException(error is String ? error : 'ERPNext rejected the Gate Pass request.');
+      }
+    }
+    throw TripScanException(
+      recording
+          ? 'ERPNext did not confirm the save. Check the Gate Pass before scanning again.'
+          : 'ERPNext returned an invalid Gate Pass response.',
+      outcomeUnknown: recording,
+    );
+  }
+
+  Future<Map<String, dynamic>> _readGatePass(String id, String operation,
+      {String? query}) async {
+    try {
+      final path = Uri(path: '/api/method/$equipmentGatePassApi',
+        queryParameters: {
+          'gate_pass_id': id, 'operation': operation, if (query != null) 'query': query,
+        }).toString();
+      return _gatePassResult(await _request('GET', path, includeServerReason: true));
+    } on ErpAuthException catch (error) {
+      if (error.statusCode == 401) _clear();
+      throw TripScanException(error.message);
+    }
+  }
+
+  Future<EquipmentGatePassDetails> loadEquipmentGatePass(String contents) async {
+    final id = _gatePassId(contents);
+    return EquipmentGatePassDetails.fromResponse(await _readGatePass(id, 'preview'), id);
+  }
+
+  Future<List<GatePassEmployee>> searchGatePassDrivers(String contents, String query) async {
+    final id = _gatePassId(contents);
+    final value = query.trim();
+    if (value.length < 2 || value.length > 80) return [];
+    final result = await _readGatePass(id, 'search', query: value);
+    final employees = result['employees'];
+    if (employees is! List) {
+      throw const TripScanException('ERPNext returned an invalid employee list.');
+    }
+    return [
+      for (final row in employees)
+        if (row is Map && row['name'] is String && row['employee_name'] is String)
+          (id: row['name'] as String, name: row['employee_name'] as String),
+    ];
+  }
+
+  Future<TripScanReceipt> recordEquipmentGatePass(
+      String contents, TripScanAction action, String? returnedBy) async {
+    final id = _gatePassId(contents);
+    if (_tripSaveInFlight) throw const TripScanException('A scan is already being saved.');
+    _tripSaveInFlight = true;
+    try {
+      await _prepareTripWrite();
+      final scanner = _user!;
+      Map<String, dynamic> response;
+      try {
+        response = await _request('POST', '/api/method/$equipmentGatePassApi',
+          includeServerReason: true, csrfToken: _csrfToken,
+          form: {
+            'gate_pass_id': id, 'operation': 'record', 'scan_mode': action.mode,
+            'csrf_token': _csrfToken!,
+            if (action == TripScanAction.arrival && returnedBy != null)
+              'returned_by': returnedBy,
+          },
+        );
+      } on ErpAuthException catch (error) {
+        if (error.statusCode == 401) _clear();
+        if ([400, 401, 403, 404, 417, 429].contains(error.statusCode)) {
+          throw TripScanException('${error.message} The scan was not accepted.');
+        }
+        throw const TripScanException(
+          'No save confirmation received. Check the Gate Pass before scanning again.',
+          outcomeUnknown: true,
+        );
+      }
+      return EquipmentGatePassDetails.confirmation(
+        _gatePassResult(response, recording: true), id, action, scanner, returnedBy,
+      );
     } finally {
       _tripSaveInFlight = false;
     }

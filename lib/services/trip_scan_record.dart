@@ -19,10 +19,11 @@ class TripScanException implements Exception {
 
 class TripScanReceipt {
   final String ticket, employee, user, date, time;
-  final String? employeeName;
+  final String? employeeName, returnedByName;
   final TripScanAction action;
   const TripScanReceipt({required this.ticket, required this.employee,
-    required this.user, required this.date, required this.time, required this.action, this.employeeName});
+    required this.user, required this.date, required this.time, required this.action,
+    this.employeeName, this.returnedByName});
 
   factory TripScanReceipt.fromResponse(Map<String, dynamic> response,
       String ticket, TripScanAction action, String user) {

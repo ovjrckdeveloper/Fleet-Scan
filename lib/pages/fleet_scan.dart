@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'package:flutter/services.dart';
+import '../services/equipment_gate_pass.dart';
 import '../services/trip_scan_record.dart';
 import '../services/trip_ticket_details.dart';
 import 'trip_scan_panel.dart';
@@ -11,7 +12,11 @@ import 'trip_scan_panel.dart';
 class FleetScanner extends StatefulWidget {
   final RecordTripScan record;
   final LoadTripTicket? loadTicket;
-  const FleetScanner({super.key, required this.record, this.loadTicket});
+  final LoadTripTicket? loadGatePass;
+  final RecordGatePass? recordGatePass;
+  final SearchGatePassDrivers? searchGatePassDrivers;
+  const FleetScanner({super.key, required this.record, this.loadTicket,
+    this.loadGatePass, this.recordGatePass, this.searchGatePassDrivers});
 
   @override
   State<FleetScanner> createState() => _FleetScannerState();
@@ -32,6 +37,7 @@ class _FleetScannerState extends State<FleetScanner>
   bool _flashOn = false;
   bool _changingCamera = false;
   bool _cameraReady = false;
+  bool _equipment = false;
 
   @override
   void initState() {
@@ -73,8 +79,15 @@ class _FleetScannerState extends State<FleetScanner>
     _subscription?.cancel();
     _subscription = controller.scannedDataStream.listen((barcode) async {
       if (!mounted || _captured || _changingCamera) return;
-      final contents = barcode.code;
-      if (contents == null || contents.trim().isEmpty) return;
+      final contents = barcode.code?.trim();
+      if (contents == null || contents.isEmpty) return;
+      final id = contents.toUpperCase();
+      final equipment = id.startsWith('IEGP-');
+      if (!equipment && !id.startsWith('TRIP-')) {
+        const message = 'Scan a Trip Ticket or Industrial Equipment Gate Pass QR code.';
+        if (_cameraError != message) setState(() => _cameraError = message);
+        return;
+      }
       _captured = true;
       _scanLine.stop();
       Uint8List? image;
@@ -89,7 +102,12 @@ class _FleetScannerState extends State<FleetScanner>
         // Preview capture is currently implemented for Android.
       }
       if (!mounted) return;
-      setState(() { _contents = contents; _scanImage = image; });
+      setState(() {
+        _contents = contents;
+        _equipment = equipment;
+        _scanImage = image;
+        _cameraError = null;
+      });
       await controller.pauseCamera();
     });
   }
@@ -162,8 +180,9 @@ class _FleetScannerState extends State<FleetScanner>
           const SizedBox(width: 4),
         ],
       ),
-      body: Column(
-        children: [
+      body: LayoutBuilder(builder: (context, viewport) {
+        return Column(
+          children: [
           Expanded(
             child: LayoutBuilder(builder: (context, constraints) {
               final cutOutSize = math.min(300.0,
@@ -185,14 +204,17 @@ class _FleetScannerState extends State<FleetScanner>
                           ? null
                           : 'Camera access denied. Allow camera access in app settings.');
                     },
-                    overlay: QrScannerOverlayShape(
-                      overlayColor: Colors.transparent,
-                      borderColor: Colors.transparent,
-                      borderRadius: 18,
-                      borderLength: 28,
-                      borderWidth: 3,
-                      cutOutSize: cutOutSize,
-                    ),
+                    // The paused preview can shrink to zero when the keyboard opens.
+                    overlay: _captured || cutOutSize <= 0
+                        ? null
+                        : QrScannerOverlayShape(
+                            overlayColor: Colors.transparent,
+                            borderColor: Colors.transparent,
+                            borderRadius: 18,
+                            borderLength: math.min(28.0, cutOutSize / 2),
+                            borderWidth: 3,
+                            cutOutSize: cutOutSize,
+                          ),
                   ),
                   if (!_captured)
                     IgnorePointer(
@@ -213,7 +235,7 @@ class _FleetScannerState extends State<FleetScanner>
                                     constraints.maxHeight - 24))),
                             fit: BoxFit.contain,
                             filterQuality: FilterQuality.low,
-                            semanticLabel: 'Camera image of the scanned Trip Ticket QR code',
+                            semanticLabel: 'Camera image of the scanned QR code',
                           ),
                         ),
                       ),
@@ -236,7 +258,7 @@ class _FleetScannerState extends State<FleetScanner>
                             const Icon(Icons.qr_code_scanner, color: Colors.white, size: 19),
                             const SizedBox(width: 8),
                             Flexible(child: Text(
-                              _captured ? 'Trip Ticket QR captured' : 'Scan a Trip Ticket QR Code',
+                              'Scan a Trip Ticket or Equipment Gate Pass',
                               style: const TextStyle(color: Colors.white, fontSize: 13),
                             )),
                           ],
@@ -265,7 +287,7 @@ class _FleetScannerState extends State<FleetScanner>
                               Expanded(child: Semantics(
                                 liveRegion: _cameraError != null,
                                 child: Text(
-                                  _cameraError ?? 'Position the QR code within the frame to scan the Trip Ticket.',
+                                  _cameraError ?? 'Position the QR code within the frame.',
                                   style: const TextStyle(color: Color(0xFF263238), fontSize: 13),
                                 ),
                               )),
@@ -285,25 +307,31 @@ class _FleetScannerState extends State<FleetScanner>
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
-              child: SafeArea(
-                top: false,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.60),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  // Scan details take priority; the QR preview uses the remaining space.
+                  maxHeight: viewport.maxHeight,
+                ),
+                child: SafeArea(
+                  top: false,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     child: TripScanPanel(
                       key: ValueKey(_contents),
                       ticket: _contents!,
                       record: widget.record,
-                      loadTicket: widget.loadTicket,
+                      loadTicket: _equipment ? widget.loadGatePass : widget.loadTicket,
+                      recordGatePass: _equipment ? widget.recordGatePass : null,
+                      searchGatePassDrivers: _equipment ? widget.searchGatePassDrivers : null,
                       scanAgain: _scanAgain,
                     ),
                   ),
                 ),
               ),
             ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 }

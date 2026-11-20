@@ -1,6 +1,6 @@
 # Fleet Scan
 
-GSCWD Fleet Trip Ticket QR scanner built with Flutter for Android.
+GSCWD Fleet QR scanner for Trip Tickets and Industrial Equipment Gate Passes, built with Flutter for Android.
 
 Sign in with your ERPNext username/email and password. Accounts need the
 **Fleet Scanner Operator** role. Every account, including Administrator, must
@@ -16,6 +16,43 @@ and the signed-in operator's linked Employee. No write occurs until you choose.
 as `fleet_scan_trip_ticket_mobile`, with Allow Guest unchecked. Configure the
 fields, permissions and Employee User ID link described in
 [scanner setup](docs/trip-ticket-scanning.md). No API key is needed.
+
+## Industrial Equipment Gate Passes
+
+Scan the QR for a submitted pass directly. The scanner recognizes `IEGP-` as
+an Equipment Gate Pass and `TRIP-` as a Trip Ticket. Keep the exact document
+ID in the QR from the existing ERPNext Client Script.
+The preview shows the requester and any recorded OUT and IN details.
+
+Install [the Gate Pass Server Script](server/fleet_scan_equipment_gate_pass_mobile.py)
+as an **API** Server Script with API Method `fleet_scan_equipment_gate_pass_mobile`.
+Keep **Allow Guest** unchecked. The Trip Ticket script stays installed separately.
+
+In **Customize Form → Industrial Equipment Gate Pass**, configure these fields:
+
+| Field | Type | Allow on Submit |
+|---|---|---|
+| `requested_by` | Link → Employee | Existing setting |
+| `motorpool_on_duty_out` | Link → Employee | Yes |
+| `time_equipment_out` | Datetime | Yes |
+| `motorpool_on_duty_in` | Link → Employee | Yes |
+| `time_equipment_in` | Datetime | Yes |
+| `returned_by` | Link → Employee | Yes |
+
+Give scanner operators Read and Write access to the Gate Passes they handle,
+including the fields above. Each scanner login must link to exactly one active
+Employee. For an authorized operator receiving a pass, the API returns only
+the IDs and names of active Employees linked to an enabled ERPNext User with
+the **Fleet Driver** role. The search does not require general Employee list
+access. ERPNext rechecks eligibility and applies normal document permissions
+when saving IN.
+Leaving **Returned by** blank uses the pass's `requested_by` Employee.
+
+To verify on ERPNext, scan separate submitted passes through OUT and IN.
+Leave **Returned by** blank on one and select a matching Fleet Driver on another.
+Verify the Employee links and site timestamps on the saved passes, rescan to
+confirm their status and scan history, and try an already recorded movement to
+confirm it cannot be overwritten.
 
 ## Development
 

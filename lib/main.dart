@@ -46,7 +46,13 @@ class _FleetScanAppState extends State<FleetScanApp> {
       await _session.verifyAccess();
       if (!mounted || !_session.signedIn) return;
       await _navigator.currentState!.push<void>(
-        MaterialPageRoute(builder: (_) => FleetScanner(record: _session.recordTripScan, loadTicket: _session.loadTripTicket)),
+        MaterialPageRoute(builder: (_) => FleetScanner(
+          record: _session.recordTripScan,
+          loadTicket: _session.loadTripTicket,
+          loadGatePass: _session.loadEquipmentGatePass,
+          recordGatePass: _session.recordEquipmentGatePass,
+          searchGatePassDrivers: _session.searchGatePassDrivers,
+        )),
       );
     } on ErpAuthException catch (error) {
       if (mounted) setState(() => _error = error.message);

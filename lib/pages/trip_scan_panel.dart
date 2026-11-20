@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/equipment_gate_pass.dart';
 import '../services/trip_scan_record.dart';
 import '../services/trip_ticket_details.dart';
+import 'gate_pass_return_picker.dart';
 
 /// Camera-independent result panel, also used by widget tests.
 class TripScanPanel extends StatefulWidget {
@@ -8,7 +10,10 @@ class TripScanPanel extends StatefulWidget {
   final RecordTripScan record;
   final VoidCallback scanAgain;
   final LoadTripTicket? loadTicket;
-  const TripScanPanel({super.key, required this.ticket, required this.record, required this.scanAgain, this.loadTicket});
+  final RecordGatePass? recordGatePass;
+  final SearchGatePassDrivers? searchGatePassDrivers;
+  const TripScanPanel({super.key, required this.ticket, required this.record,
+    required this.scanAgain, this.loadTicket, this.recordGatePass, this.searchGatePassDrivers});
   @override
   State<TripScanPanel> createState() => _TripScanPanelState();
 }
@@ -22,6 +27,22 @@ class _TripScanPanelState extends State<TripScanPanel> {
   TripTicketDetails? _details;
   bool _loading = false;
   String? _detailsError;
+  String? _returnedBy;
+  bool _returnSelectionValid = true;
+
+  bool get _isGatePass => widget.recordGatePass != null;
+  EquipmentGatePassDetails? get _gatePass =>
+      _details is EquipmentGatePassDetails ? _details as EquipmentGatePassDetails : null;
+  String get _documentLabel => _isGatePass ? 'Gate Pass' : 'Trip Ticket';
+
+  String? _statusLabel(TripTicketStatus? status) => _isGatePass
+      ? switch (status) {
+          TripTicketStatus.readyToDepart => 'Not Released',
+          TripTicketStatus.onTrip => 'Equipment Out',
+          TripTicketStatus.completed => 'Equipment Returned',
+          _ => status?.label,
+        }
+      : status?.label;
 
   @override
   void initState() {
@@ -51,12 +72,16 @@ class _TripScanPanelState extends State<TripScanPanel> {
 
   Future<void> _save(TripScanAction action) async {
     if (_saving || _attempted || _loading || _detailsError != null ||
-        _details?.status.nextAction != action) {
+        _details?.status.nextAction != action || !_returnSelectionValid) {
       return;
     }
     setState(() { _saving = true; _attempted = true; });
     try {
-      final receipt = await widget.record(widget.ticket, action);
+      FocusScope.of(context).unfocus();
+      final recordGatePass = widget.recordGatePass;
+      final receipt = await (recordGatePass != null
+          ? recordGatePass(widget.ticket, action, _returnedBy)
+          : widget.record(widget.ticket, action));
       if (mounted) setState(() => _receipt = receipt);
     } on TripScanException catch (error) {
       if (mounted) setState(() { _error = error.message; _unknown = error.outcomeUnknown; });
@@ -196,7 +221,7 @@ class _TripScanPanelState extends State<TripScanPanel> {
         ),
         child: Text(_loading ? 'Checking status…'
             : _detailsError != null ? 'Status unavailable'
-            : status?.label ?? 'Status unavailable',
+            : _statusLabel(status) ?? 'Status unavailable',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13,
               color: orange ? const Color(0xFFAA4C0B)
                   : complete ? Colors.green.shade800 : Colors.lightBlue.shade800)),
@@ -233,8 +258,8 @@ class _TripScanPanelState extends State<TripScanPanel> {
               borderRadius: BorderRadius.circular(8)),
         ),
       ),
-      const Text('TRIP TICKET',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blueGrey)),
+      Text(_isGatePass ? 'INDUSTRIAL EQUIPMENT GATE PASS' : 'TRIP TICKET',
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blueGrey)),
       const SizedBox(height: 4),
       Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -260,9 +285,13 @@ class _TripScanPanelState extends State<TripScanPanel> {
           borderRadius: BorderRadius.circular(18),
         ),
         child: Column(children: [
-          _detailRow(Icons.directions_car_outlined, 'Vehicle', _details?.vehicle),
-          Divider(height: 1, color: Colors.grey.shade300),
-          _detailRow(Icons.person_outline, 'Driver', _details?.driver),
+          if (_isGatePass)
+            _detailRow(Icons.person_outline, 'Requested by', _gatePass?.requestedBy)
+          else ...[
+            _detailRow(Icons.directions_car_outlined, 'Vehicle', _details?.vehicle),
+            Divider(height: 1, color: Colors.grey.shade300),
+            _detailRow(Icons.person_outline, 'Driver', _details?.driver),
+          ],
         ]),
       ),
       if (_details?.driverLookupError case final explanation?)
@@ -293,6 +322,8 @@ class _TripScanPanelState extends State<TripScanPanel> {
           const Divider(height: 1),
         _existingScanRow('Arrival (IN)', _arrivalAt, _details?.arrivalEmployeeName),
       ],
+      if ((_receipt?.returnedByName ?? _gatePass?.returnedBy) case final returnedBy?)
+        _detailRow(Icons.assignment_return_outlined, 'Returned by', returnedBy),
       if (_detailsError != null) ...[
         const SizedBox(height: 12),
         Semantics(liveRegion: true, child: Text(_detailsError!,
@@ -308,10 +339,21 @@ class _TripScanPanelState extends State<TripScanPanel> {
               textAlign: TextAlign.center),
         ),
       if (!_loading && _detailsError == null && _status == TripTicketStatus.incomplete)
-        const Padding(
-          padding: EdgeInsets.only(bottom: 12),
-          child: Text('This ticket has incomplete scan records. Check the Trip Ticket in ERPNext before scanning again.',
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text('This record has incomplete scan details. Check the $_documentLabel in ERPNext before scanning again.',
               textAlign: TextAlign.center),
+        ),
+      if (!_attempted && !_loading && _detailsError == null && _isGatePass &&
+          _details?.status.nextAction == TripScanAction.arrival &&
+          widget.searchGatePassDrivers != null)
+        GatePassReturnPicker(
+          requestedBy: _gatePass?.requestedBy,
+          search: (query) => widget.searchGatePassDrivers!(widget.ticket, query),
+          onChanged: (employee, valid) => setState(() {
+            _returnedBy = employee;
+            _returnSelectionValid = valid;
+          }),
         ),
       if (!_attempted && !_loading && _detailsError == null)
         for (final action in [
@@ -327,7 +369,7 @@ class _TripScanPanelState extends State<TripScanPanel> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              onPressed: _loading || _detailsError != null ? null : () => _save(action),
+              onPressed: _returnSelectionValid ? () => _save(action) : null,
               icon: Icon(action == TripScanAction.departure ? Icons.logout : Icons.login),
               label: Text('Confirm ${action.label}',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
