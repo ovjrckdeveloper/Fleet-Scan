@@ -14,6 +14,9 @@ void main() {
   testWidgets('verified sign-in remembers the guard for the next login', (tester) async {
     const channel = MethodChannel('com.gscwd.fleet_scan/roster');
     final messenger = tester.binding.defaultBinaryMessenger;
+    const sessionChannel = MethodChannel('com.gscwd.fleet_scan/session');
+    messenger.setMockMethodCallHandler(sessionChannel, (_) async => null);
+    addTearDown(() => messenger.setMockMethodCallHandler(sessionChannel, null));
     String? saved;
     messenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'read') return saved;

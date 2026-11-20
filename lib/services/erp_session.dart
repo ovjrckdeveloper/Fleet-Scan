@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'equipment_gate_pass.dart';
 import 'operator_roster.dart';
@@ -15,12 +16,17 @@ class ErpAuthException implements Exception {
   String toString() => message;
 }
 
-/// Android session login. Passwords and session cookies are never persisted.
+/// Android session login. Only verified sessions are saved in encrypted storage.
 class ErpSession extends ChangeNotifier {
   static const defaultSite = String.fromEnvironment('FRAPPE_URL',
       defaultValue: 'https://tubigconnect.gscwd.app');
   final Uri site;
   final http.Client _client;
+  static const _storage = MethodChannel('com.gscwd.fleet_scan/session');
+  static const _sessionLength = Duration(hours: 8);
+  DateTime? _expiresAt;
+  DateTime? get expiresAt => _expiresAt;
+  int _sessionGeneration = 0;
   String? _sid;
   String? _csrfToken;
   bool _tripSaveInFlight = false;
@@ -40,8 +46,64 @@ class ErpSession extends ChangeNotifier {
     }
   }
 
-  void _clear() {
+  Future<String?> _storedSession(String method, {String? session}) async {
+    try {
+      final result = await _storage.invokeMethod<Object?>(method, {
+        'site': site.origin,
+        if (session != null) 'session': session,
+      });
+      return result is String ? result : null;
+    } on Exception {
+      return null;
+    } on FlutterError {
+      return null;
+    }
+  }
+
+  Future<void> restore() async {
+    if (signedIn || kIsWeb) return;
+    final generation = _sessionGeneration;
+    final saved = await _storedSession('read');
+    if (saved == null || generation != _sessionGeneration) return;
+    try {
+      final data = jsonDecode(saved);
+      if (data is! Map) throw const FormatException('Invalid session');
+      final cookie = data['sid'];
+      final name = data['name'];
+      final user = data['user'];
+      final deadline = data['expiresAt'];
+      if (cookie is! String || !RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(cookie) ||
+          cookie == 'Guest' || deadline is! String || user is! String || user.isEmpty) {
+        throw const FormatException('Invalid session');
+      }
+      final expiry = DateTime.tryParse(deadline);
+      final now = DateTime.now();
+      if (expiry == null || !expiry.isAfter(now) || expiry.isAfter(now.add(_sessionLength))) {
+        throw const FormatException('Expired session');
+      }
+      _sid = cookie;
+      _expiresAt = expiry;
+      _fullName = name is String ? name : null;
+      await verifyAccess(expectedUser: user);
+      await _saveVerifiedSession();
+    } on Exception {
+      if (generation == _sessionGeneration) _clear();
+    }
+  }
+
+  Future<void> _saveVerifiedSession() async {
+    if (_sid == null || _user == null || _expiresAt == null) return;
+    await _storedSession('write', session: jsonEncode({
+      'sid': _sid, 'user': _user, 'name': _fullName,
+      'expiresAt': _expiresAt!.toUtc().toIso8601String(),
+    }));
+  }
+
+  void _clear({bool deleteSaved = true}) {
+    _sessionGeneration++;
     _sid = null;
+    _expiresAt = null;
+    if (deleteSaved) unawaited(_storedSession('clear'));
     _csrfToken = null;
     _user = null;
     _fullName = null;
@@ -78,6 +140,7 @@ class ErpSession extends ChangeNotifier {
 
   Future<Map<String, dynamic>> _request(String method, String path,
       {Map<String, String>? form, String? csrfToken, bool includeServerReason = false}) async {
+    final generation = _sessionGeneration;
     final request = http.Request(method, site.resolve(path))
       ..followRedirects = false
       ..headers['Accept'] = 'application/json';
@@ -94,6 +157,9 @@ class ErpSession extends ChangeNotifier {
       throw const ErpAuthException('Cannot connect securely to ERPNext. Check your network and site availability.');
     } catch (_) {
       throw const ErpAuthException('Cannot establish a secure connection to ERPNext. Please try again or contact your administrator.');
+    }
+    if (generation != _sessionGeneration) {
+      throw const ErpAuthException('This session has ended. Please sign in again.');
     }
     final cookie = RegExp(r'(?:^|,\s*)sid=([^;,\s]*)', caseSensitive: false)
         .firstMatch(response.headers['set-cookie'] ?? '')?.group(1);
@@ -167,7 +233,9 @@ class ErpSession extends ChangeNotifier {
     _challenge = null;
     final name = data['full_name'];
     _fullName = name is String && name.trim().isNotEmpty ? name.trim() : null;
+    _expiresAt = DateTime.now().add(_sessionLength);
     await verifyAccess();
+    await _saveVerifiedSession();
     final user = _user;
     if (user != null) {
       await RememberedOperators.remember(site, (name: _fullName ?? user, email: user));
@@ -176,11 +244,13 @@ class ErpSession extends ChangeNotifier {
 
   /// Rechecks identity and roles before opening the camera. The server must
   /// independently authorize every future write operation.
-  Future<void> verifyAccess() async {
+  Future<void> verifyAccess({String? expectedUser}) async {
+    final generation = _sessionGeneration;
     try {
       if (_sid == null) throw const ErpAuthException('Please sign in again.');
       final identity = (await _request('GET', '/api/method/frappe.auth.get_logged_user'))['message'];
-      if (identity is! String || identity.isEmpty || identity == 'Guest') {
+      if (identity is! String || identity.isEmpty || identity == 'Guest' ||
+          (expectedUser != null && identity != expectedUser)) {
         throw const ErpAuthException('Your session expired. Please sign in again.');
       }
       final roles = (await _request('GET',
@@ -192,10 +262,13 @@ class ErpSession extends ChangeNotifier {
         await RememberedOperators.forget(site, identity);
         throw const ErpAuthException('You are not assigned the Fleet Scanner Operator role. Please contact your ERPNext administrator.');
       }
+      if (_sid == null || !(_expiresAt?.isAfter(DateTime.now()) ?? false)) {
+        throw const ErpAuthException('Your session expired. Please sign in again.');
+      }
       _user = identity;
       notifyListeners();
     } catch (_) {
-      await logout();
+      if (generation == _sessionGeneration) await logout();
       rethrow;
     }
   }
@@ -552,17 +625,17 @@ class ErpSession extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    try {
-      if (_sid != null) await _request('GET', '/api/method/logout');
-    } on ErpAuthException {
-      // Always discard the local session, including when offline.
-    } finally {
-      _clear();
-    }
+    // Start the revocation request with the current cookie, then end local access.
+    final revoke = _sid == null ? null : _request('GET', '/api/method/logout')
+        .then<void>((_) {}, onError: (Object _) {});
+    _clear(deleteSaved: false);
+    await _storedSession('clear');
+    await revoke;
   }
 
   @override
   void dispose() {
+    _sessionGeneration++;
     _sid = null;
     _challenge = null;
     _client.close();

@@ -54,6 +54,44 @@ final class OperatorRosterStorage {
         });
     }
 
+    void registerSessionStorage(FlutterEngine engine) {
+        new MethodChannel(engine.getDartExecutor().getBinaryMessenger(),
+                "com.gscwd.fleet_scan/session").setMethodCallHandler((call, result) -> {
+            String site = call.argument("site");
+            if (site == null || site.isEmpty()) {
+                result.error("invalid_site", "Missing ERPNext site.", null);
+                return;
+            }
+            String key = "session:" + site;
+            try {
+                switch (call.method) {
+                    case "read":
+                        result.success(read(key));
+                        break;
+                    case "write":
+                        String session = call.argument("session");
+                        if (session == null || session.isEmpty()) {
+                            result.error("invalid_session", "Missing session.", null);
+                            return;
+                        }
+                        write(key, session);
+                        result.success(null);
+                        break;
+                    case "clear":
+                        if (!preferences.edit().remove(key).commit()) {
+                            throw new IllegalStateException("Could not remove the session.");
+                        }
+                        result.success(null);
+                        break;
+                    default:
+                        result.notImplemented();
+                }
+            } catch (Exception error) {
+                result.error("session_storage", "Could not access the saved session.", null);
+            }
+        });
+    }
+
     private KeyStore keyStore() throws Exception {
         KeyStore store = KeyStore.getInstance("AndroidKeyStore");
         store.load(null);
@@ -94,7 +132,7 @@ final class OperatorRosterStorage {
         byte[] encoded = ByteBuffer.allocate(cipher.getIV().length + ciphertext.length)
                 .put(cipher.getIV()).put(ciphertext).array();
         if (!preferences.edit().putString(site, Base64.encodeToString(encoded, Base64.NO_WRAP)).commit()) {
-            throw new IllegalStateException("Remembered operators were not saved.");
+            throw new IllegalStateException("Encrypted storage write failed.");
         }
     }
 }

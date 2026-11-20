@@ -18,7 +18,9 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void configureFlutterEngine(FlutterEngine engine) {
         super.configureFlutterEngine(engine);
-        new OperatorRosterStorage(this).register(engine);
+        OperatorRosterStorage storage = new OperatorRosterStorage(this);
+        storage.register(engine);
+        storage.registerSessionStorage(engine);
         new MethodChannel(engine.getDartExecutor().getBinaryMessenger(),
                 "com.gscwd.fleet_scan/preview").setMethodCallHandler((call, result) -> {
             if (!call.method.equals("capture")) {
